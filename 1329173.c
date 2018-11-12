@@ -20,10 +20,18 @@ struct node
 };
 
 struct nodeQueue{
-	struct node* pointer;
+	struct node *pointer;
 	struct nodeQueue *next;
 	struct nodeQueue *previous;
 };
+
+void conc(char *c, char x){
+	while(*c)
+		c++;
+	*c = x;
+	*(c+1) = '\0';
+}
+
 
 struct nodeQueue *searchLast(struct nodeQueue *head){
 	while(head){
@@ -64,7 +72,7 @@ void push(struct nodeQueue **pth,struct node* ptr){
 and then returns it*/
 
 struct node *get(struct nodeQueue **pth){
-	struct node* x = 0;
+	struct node* x = NULL;
 	struct nodeQueue *p1 = *pth;
 	x = (*pth)->pointer;
 	if((*pth)->next!=NULL)
@@ -76,64 +84,154 @@ struct node *get(struct nodeQueue **pth){
 	return x;
 }
 
-/*Function that returns a pointer to a struct node that fulfills the task of 
-parent for a new piece of data*/
+struct node *pop(struct nodeQueue **pth){
+	struct node* x = NULL;
+	struct nodeQueue *p1 = NULL;
+	p1 = *pth;
+	while(p1->next)
+		p1 = p1->next;
 
-struct node* parent(struct node* root, char *data){
-	if(data > root->data){
-		if( root->right ==NULL)
-			return root;
-		return parent((root)->right,data);
-	}
-	else{
-		if( root->left ==NULL)
-			return root;
-		return parent(root->left,data);	
-	}
-}
-
-/*Function to insert nodes to the binary tree*/
-
-void insert(struct node** root, char *data){
-	struct node* temp = (struct node*)(malloc(sizeof(struct node)));
-	strcpy(temp->data,data);
-	if((*root)!=NULL){
-		struct node* nParent = parent(*root,data);
-		if(nParent!=NULL)
-			if(atoi(data) > atoi(nParent->data))
-				nParent->right = temp;
-			else
-				nParent->left = temp;
-	}
+	x = p1->pointer;
+	if(p1->previous)
+		p1->previous->next = NULL;
 	else
-		*root = temp;
+		*pth = NULL;
+	memset(p1,0,sizeof(struct nodeQueue));
+	free(p1);
+	return x;
 }
 
-/*Function to insert nodes to the binary tree*/
-
-void insertPreFix(struct node** root, char *data){;
-	
-}
-
-void insertInFix(struct node** root, char *data){
-	
-}
-
-void insertPostFix(struct node** root, char *data){;
-	
-	struct node* temp = (struct node*)(malloc(sizeof(struct node)));
-	
+void parse(struct nodeQueue** queue, char *data){
 	while(*data){
-		printf("%c\n",*data );
-		if((*root)!=NULL){
-
+		if (*data != 10 && *data != 32 && *data != 40 && *data != 41){
+			struct node* temp = (struct node*)(malloc(sizeof(struct node)));
+			if (isdigit(*data)){
+				while(isdigit(*data)){
+					conc(temp->data,*data);
+					data++;
+				}
+			}
+			else{
+				conc(temp->data,*data);
+				data++;
+			}
+			strcpy(temp->data,temp->data);
+			push(queue,temp);
 		}
-		else
-			*root = temp;
 		data++;
 	}
 }
 
+void parseBracket(struct nodeQueue** queuePost,struct nodeQueue** queueNums,struct nodeQueue** queueOper, char *data){
+	while(*data){
+		if (*data != 10 && *data != 32 && *data != 40 && *data != 41){
+			struct node* temp = (struct node*)(malloc(sizeof(struct node)));
+			if (isdigit(*data)){
+				while(isdigit(*data)){
+					conc(temp->data,*data);
+					data++;
+				}
+			}
+			else{
+				conc(temp->data,*data);
+				data++;
+			}
+			strcpy(temp->data,temp->data);
+			if (isdigit( *(temp->data) ))
+				push(queueNums,temp);
+			else
+				push(queueOper,temp);
+		}
+		else if(*data == 41){
+			if(*queueNums){
+				struct node* x1 = NULL;
+				struct node* x2 = NULL;
+				if (*queueNums)
+					x1 = pop(queueNums);
+				if (*queueNums)
+					x2 = pop(queueNums);
+				if(x2)
+					push(queuePost,x2);
+				if(x1)
+					push(queuePost,x1);
+			}
+			if (*queueOper)
+				push(queuePost,pop(queueOper));
+			data++;
+		}
+		else
+			data++;
+	}
+}
+
+
+int insertPost(struct node** root, struct node* data){
+	if(*root){
+		if(!isdigit(* ( (*root) -> data) ) ){
+			if(insertPost(&(*root)->right,data))
+				return 1;
+			if(insertPost(&(*root)->left,data))
+				return 1;
+		}
+		else
+			return 0;
+	}
+	else{
+		*root = data;
+		return 1;
+	}
+}
+
+int insertPre(struct node** root, struct node* data){
+	if(*root){
+		if(!isdigit(* ( (*root) -> data) ) ){
+			if(insertPre(&(*root)->left,data))
+				return 1;
+			if(insertPre(&(*root)->right,data))
+				return 1;
+		}
+		else
+			return 0;
+	}
+	else{
+		*root = data;
+		return 1;
+	}
+}
+
+void insertPostFix(struct node** root, char *data){;
+	struct nodeQueue* queue = NULL;
+	parse(&queue,data);
+	while(queue)
+		insertPost(root,pop(&queue));
+}
+
+void insertPreFix(struct node** root, char *data){;
+	struct nodeQueue* queue = NULL;
+	parse(&queue,data);
+	while(queue)
+		insertPre(root,get(&queue));
+}
+
+void insertInFix(struct node** root, char *data){
+	struct nodeQueue* queueNums = NULL;
+	struct nodeQueue* queueOper = NULL;
+	struct nodeQueue* queuePost = NULL;
+	parseBracket(&queuePost,&queueNums,&queueOper,data);
+	while(queuePost)
+		insertPost(root,pop(&queuePost));
+}
+
+void read(struct node** root ){
+	char *data = (char *)(malloc(sizeof(char)));
+	fgets(data,1024,stdin);
+	if(*data == 40) // = (
+		insertInFix(root,data);
+	else if(isdigit(*data)) // Number
+		insertPostFix(root,data);
+	else  // Operator
+		insertPreFix(root,data);
+}
 
 /*Function to prints the nodes of the tree in PreOrder*/
 
@@ -159,10 +257,19 @@ void printPostOrder(struct node* root){
 
 void printInOrder(struct node* root){
 	if(root){
-		printInOrder(root->left);
-		printf("%s ",root->data);
-		printInOrder(root->right);
-	}
+		if(isdigit(*(root->data))){
+			printf("(");
+			printInOrder(root->left);
+			printf("%s ",root->data);
+			printInOrder(root->right);
+			printf(")");
+		}
+		else{
+			printInOrder(root->left);
+			printf("%s ",root->data);
+			printInOrder(root->right);	
+		}
+	}	
 }
 
 /*Function to prints the nodes of the tree in LevelOrder*/
@@ -181,15 +288,27 @@ void printLevelOrder(struct node* root){
 	printf("\n");
 }
 
-void read(struct node** root ){
-	char *data = (char *)(malloc(sizeof(char)));
-	fgets(data,1024,stdin);
-	if(*data == 40)
-		insertInFix(root,data);
-	else if(isdigit(*data))
-		insertPostFix(root,data);
-	else 
-		insertPreFix(root,data);
+int result(struct node* root){
+	if(!isdigit(*(root->data))){
+		switch(*root->data){
+			case 42://*
+				return result(root->left) * result(root->right);
+				break;
+			case 43://+
+				return result(root->left) + result(root->right);
+				break;
+			case 45://-
+				return result(root->left) - result(root->right);
+				break;
+			case 47:///
+				return result(root->left) / result(root->right);
+				break;
+		}
+	}
+	else{
+		return atoi(root->data);
+	}
+
 }
 
 //Main
@@ -198,23 +317,24 @@ int main(int argc, char const *argv[]){
 	char *numberKeys  = (char *)(malloc(sizeof(char)));
 	fgets(numberKeys,1024,stdin);
 	for (int i = 0; i < atoi(numberKeys); ++i){
+		printf("%d.\n", i+1);
 		struct node * root = NULL;
 		read(&root);
-		printf("PreOrder   = ");
+
+		printf("prefix   = ");
 		printPreOrder(root);
 		printf("\n");
 	
-		printf("InOrder    = ");
+		printf("infix    = ");
 		printInOrder(root);
 		printf("\n");
 	
-		printf("PostOrder  = ");
+		printf("postfix  = ");
 		printPostOrder(root);
 		printf("\n");
+
+		printf("result: %d\n", result(root) );
 	
-		printf("LevelOrder = ");
-		printLevelOrder(root);
-		printf("%d\n",i );
 	}
 	return 0;
 }
