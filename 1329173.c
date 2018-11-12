@@ -255,20 +255,17 @@ void printPostOrder(struct node* root){
 
 /*Function to prints the nodes of the tree in InOrder*/
 
-void printInOrder(struct node* root){
+
+//0 izq
+void printInOrder(struct node* root,int side){
 	if(root){
-		if(isdigit(*(root->data))){
+		if(!side)
 			printf("(");
-			printInOrder(root->left);
-			printf("%s ",root->data);
-			printInOrder(root->right);
+		printInOrder(root->left,0);
+		printf("%s",root->data);
+		printInOrder(root->right,1);
+		if(side==1)
 			printf(")");
-		}
-		else{
-			printInOrder(root->left);
-			printf("%s ",root->data);
-			printInOrder(root->right);	
-		}
 	}	
 }
 
@@ -326,7 +323,7 @@ int main(int argc, char const *argv[]){
 		printf("\n");
 	
 		printf("infix    = ");
-		printInOrder(root);
+		printInOrder(root,-1);
 		printf("\n");
 	
 		printf("postfix  = ");
