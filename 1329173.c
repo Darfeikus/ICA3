@@ -41,10 +41,6 @@ struct nodeQueue *searchLast(struct nodeQueue *head){
 	}
 }
 
-int iint (char *x){
-	return atoi(x);
-}
-
 /*Function that inserts a nodeQueue at the beginning*/
 
 void iatb(struct nodeQueue **pth,struct node* ptr){
@@ -255,8 +251,6 @@ void printPostOrder(struct node* root){
 
 /*Function to prints the nodes of the tree in InOrder*/
 
-
-//0 izq
 void printInOrder(struct node* root,int side){
 	if(root){
 		if(!side)
@@ -305,7 +299,6 @@ int result(struct node* root){
 	else{
 		return atoi(root->data);
 	}
-
 }
 
 //Main
