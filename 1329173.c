@@ -32,7 +32,14 @@ void conc(char *c, char x){
 	*(c+1) = '\0';
 }
 
-
+int itsDigit(char* str){
+	if (*str == 45)
+		if ( isdigit(*(str+1)) )
+			return 1;
+	if ( isdigit(*str) )
+			return 1;
+	return 0;
+}
 struct nodeQueue *searchLast(struct nodeQueue *head){
 	while(head){
 		if(head->next == NULL)
@@ -97,46 +104,39 @@ struct node *pop(struct nodeQueue **pth){
 	return x;
 }
 
-void parse(struct nodeQueue** queue, char *data){
-	while(*data){
-		if (*data != 10 && *data != 32 && *data != 40 && *data != 41){
-			struct node* temp = (struct node*)(malloc(sizeof(struct node)));
-			if (isdigit(*data)){
-				while(isdigit(*data)){
-					conc(temp->data,*data);
-					data++;
-				}
-			}
-			else{
-				conc(temp->data,*data);
-				data++;
-			}
-			strcpy(temp->data,temp->data);
-			push(queue,temp);
-		}
-		data++;
-	}
-}
-
 void parseBracket(struct nodeQueue** queuePost,struct nodeQueue** queueNums,struct nodeQueue** queueOper, char *data){
+	int negative = 0;
 	while(*data){
-		if (*data != 10 && *data != 32 && *data != 40 && *data != 41){
+		int parAbierto = 1;
+		if (*data != 10 && *data != 41){
+			if (*data == 40)
+					parAbierto=0;
 			struct node* temp = (struct node*)(malloc(sizeof(struct node)));
-			if (isdigit(*data)){
+			if ( (*data == 40 || *data == 45 || *data == 42 ||*data == 43 || *data == 47) && !negative){
+				if (*(data+1) == 45)
+					negative=1;
+				conc(temp->data,*data);
+				data++;
+			}
+			else{
+				if (negative){
+					conc(temp->data,*data);
+					negative=0;
+					data++;
+				}
 				while(isdigit(*data)){
 					conc(temp->data,*data);
 					data++;
 				}
 			}
-			else{
-				conc(temp->data,*data);
-				data++;
+			if (parAbierto){
+				strcpy(temp->data,temp->data);
+				if (itsDigit( temp->data)){
+					push(queueNums,temp);
+				}
+				else
+					push(queueOper,temp);
 			}
-			strcpy(temp->data,temp->data);
-			if (isdigit( *(temp->data) ))
-				push(queueNums,temp);
-			else
-				push(queueOper,temp);
 		}
 		else if(*data == 41){
 			if(*queueNums){
@@ -161,9 +161,22 @@ void parseBracket(struct nodeQueue** queuePost,struct nodeQueue** queueNums,stru
 }
 
 
+void parse(struct nodeQueue** queue, char *data){
+	while(*data){
+		struct node* temp = (struct node*)(malloc(sizeof(struct node)));
+		while(*data != 32 && *data != 10){
+			conc(temp->data,*data);
+			data++;
+		}
+		strcpy(temp->data,temp->data);
+		push(queue,temp);
+		data++;
+	}
+}
+
 int insertPost(struct node** root, struct node* data){
 	if(*root){
-		if(!isdigit(* ( (*root) -> data) ) ){
+		if(!itsDigit(  (*root) -> data)  ){
 			if(insertPost(&(*root)->right,data))
 				return 1;
 			if(insertPost(&(*root)->left,data))
@@ -178,9 +191,18 @@ int insertPost(struct node** root, struct node* data){
 	}
 }
 
+/*Function that inserts the data with postfix input*/
+
+void insertPostFix(struct node** root, char *data){;
+	struct nodeQueue* queue = NULL;
+	parse(&queue,data);
+	while(queue)
+		insertPost(root,pop(&queue));
+}
+
 int insertPre(struct node** root, struct node* data){
 	if(*root){
-		if(!isdigit(* ( (*root) -> data) ) ){
+		if(!itsDigit( (*root) -> data) ){
 			if(insertPre(&(*root)->left,data))
 				return 1;
 			if(insertPre(&(*root)->right,data))
@@ -195,12 +217,7 @@ int insertPre(struct node** root, struct node* data){
 	}
 }
 
-void insertPostFix(struct node** root, char *data){;
-	struct nodeQueue* queue = NULL;
-	parse(&queue,data);
-	while(queue)
-		insertPost(root,pop(&queue));
-}
+/*Function that inserts the data with prefix input*/
 
 void insertPreFix(struct node** root, char *data){;
 	struct nodeQueue* queue = NULL;
@@ -208,6 +225,8 @@ void insertPreFix(struct node** root, char *data){;
 	while(queue)
 		insertPre(root,get(&queue));
 }
+
+/*Function that inserts the data with infix input*/
 
 void insertInFix(struct node** root, char *data){
 	struct nodeQueue* queueNums = NULL;
@@ -218,15 +237,25 @@ void insertInFix(struct node** root, char *data){
 		insertPost(root,pop(&queuePost));
 }
 
+/*Function that reads the input of the user*/
+
 void read(struct node** root ){
 	char *data = (char *)(malloc(sizeof(char)));
+	char *temp = (char *)(malloc(sizeof(char)));
 	fgets(data,1024,stdin);
-	if(*data == 40) // = (
+	if(*data == 40){ // = (
 		insertInFix(root,data);
-	else if(isdigit(*data)) // Number
+	}
+	else if(*data == 45){ // Number
+		if (isdigit(*(data+1)))
+			insertPostFix(root,data);
+	}
+	else if (isdigit(*(data+1))){
 		insertPostFix(root,data);
-	else  // Operator
+	}
+	else{ // Operator
 		insertPreFix(root,data);
+	}
 }
 
 /*Function to prints the nodes of the tree in PreOrder*/
@@ -263,24 +292,10 @@ void printInOrder(struct node* root,int side){
 	}	
 }
 
-/*Function to prints the nodes of the tree in LevelOrder*/
-
-void printLevelOrder(struct node* root){
-	struct nodeQueue* queue = NULL;
-	push(&queue,root);
-	while(queue){
-		struct node *x = get(&queue);
-		if(x->left)
-			push(&queue,x->left);
-		if(x->right)
-			push(&queue,x->right);
-		printf("%s ",x->data );
-	}
-	printf("\n");
-}
+/*Function that evaluates the result of the binary tree*/
 
 int result(struct node* root){
-	if(!isdigit(*(root->data))){
+	if(!itsDigit(root->data)){
 		switch(*root->data){
 			case 42://*
 				return result(root->left) * result(root->right);

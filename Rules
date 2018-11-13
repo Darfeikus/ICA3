@@ -1,0 +1,39 @@
+Write a program in C that reads an integer n followed by n lines
+each line contains a mathematical expression that can be written in prefix, infix or postfix notation
+for each expression, build a binary tree that represents that expression and write the prefix, infix and postfix notations and the result of that expression
+
+sample input:
+
+3
+((2+5)*3)
+3 5 + 4 -
++ * 4 2 3
+
+sample output:
+
+1.
+prefix: * + 2 5 3
+infix: ((2+5)*3)
+postfix: 2 5 + 3 *
+result: 21
+
+2.
+prefix: - + 3 5 4
+infix: ((3+5)-4)
+postfix: 3 5 + 4 -
+result: 4
+
+3.
+prefix: + * 4 2 3
+infix: ((4*2)+3)
+postfix: 4 2 * 3 +
+result: 11
+
+Due date: Nov 13, 11:13 hrs
+
+You can work in pairs
+Follow the homework rules
+Follow the coding conventions
+
+
+
