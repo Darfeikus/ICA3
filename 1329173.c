@@ -15,8 +15,8 @@
 struct node
 {
 	char data[1025];
-	struct node *left = NULL;
-	struct node *right = NULL;
+	struct node *left;
+	struct node *right;
 };
 
 struct nodeQueue{
@@ -46,6 +46,7 @@ struct nodeQueue *searchLast(struct nodeQueue *head){
 			return head;
 		head = head->next;
 	}
+	return NULL;
 }
 
 /*Function that inserts a nodeQueue at the beginning*/
@@ -164,7 +165,7 @@ void parseBracket(struct nodeQueue** queuePost,struct nodeQueue** queueNums,stru
 void parse(struct nodeQueue** queue, char *data){
 	while(*data){
 		struct node* temp = (struct node*)(malloc(sizeof(struct node)));
-		while(*data != 32 && *data != 10){
+		while( (*data == '*' || *data == '+' || *data == '-' || *data == '/') || (*data>='0' && *data <='9')  ){
 			conc(temp->data,*data);
 			data++;
 		}
@@ -323,7 +324,8 @@ int main(int argc, char const *argv[]){
 	fgets(numberKeys,1024,stdin);
 	for (int i = 0; i < atoi(numberKeys); ++i){
 		printf("%d.\n", i+1);
-		struct node * root = NULL;
+		struct node * root;
+		root = NULL;
 		read(&root);
 
 		printf("prefix   = ");
