@@ -244,20 +244,16 @@ void read(struct node** root ){
 	char *temp = (char *)(malloc(sizeof(char)));
 	fgets(data,1024,stdin);
 	if(*data == 40){ // = (
-		printf("inOrder\n");
 		insertInFix(root,data);
 	}
 	else if(*data == 45){ // Number
-		printf("PostOrder\n");
 		if (isdigit(*(data+1)))
 			insertPostFix(root,data);
 	}
 	else if (isdigit(*(data))){
-		printf("PostOrder\n");
 		insertPostFix(root,data);
 	}
 	else{ // Operator
-		printf("PreOrder\n");
 		insertPreFix(root,data);
 	}
 }
